@@ -7,6 +7,53 @@ import { FaGithub, FaGoogle } from "react-icons/fa";
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          isLogin
+            ? { email: formData.email, password: formData.password }
+            : formData
+        ),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "操作失败");
+        return;
+      }
+
+      // 保存 token 到 localStorage
+      localStorage.setItem("auth_token", data.token);
+      
+      // 跳转首页
+      window.location.href = "/";
+    } catch (err) {
+      setError("网络错误，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGitHubLogin = () => {
+    window.location.href = "/api/auth/github";
+  };
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
@@ -21,16 +68,29 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* 错误提示 */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
+
         {/* 第三方登录 */}
         <div className="space-y-3 mb-6">
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg hover:border-[var(--foreground)] transition-colors font-medium">
+          <button
+            onClick={handleGitHubLogin}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg hover:border-[var(--foreground)] transition-colors font-medium"
+          >
             <FaGithub size={20} /> 使用 GitHub 登录
           </button>
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg hover:border-[var(--foreground)] transition-colors font-medium">
-            <FaGoogle size={20} /> 使用 Google 登录
+          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg hover:border-[var(--foreground)] transition-colors font-medium opacity-50 cursor-not-allowed">
+            <FaGoogle size={20} /> 使用 Google 登录（暂未开放）
           </button>
-          <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg hover:border-[var(--foreground)] transition-colors font-medium">
-            <Mail size={20} /> 使用邮箱登录
+          <button
+            type="button"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg hover:border-[var(--foreground)] transition-colors font-medium"
+          >
+            <Mail size={20} /> 邮箱密码登录
           </button>
         </div>
 
@@ -45,13 +105,15 @@ export default function LoginPage() {
         </div>
 
         {/* 表单 */}
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium mb-1">用户名</label>
               <input
                 type="text"
                 placeholder="请输入用户名"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] transition-colors"
               />
             </div>
@@ -62,6 +124,9 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="请输入邮箱"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
               className="w-full px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] transition-colors"
             />
           </div>
@@ -72,6 +137,9 @@ export default function LoginPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="请输入密码"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
                 className="w-full px-4 py-3 bg-[var(--secondary)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--primary)] transition-colors pr-10"
               />
               <button
@@ -98,9 +166,11 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-hover)] transition-colors font-medium"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-hover)] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLogin ? "登录" : "注册"} <ArrowRight size={18} />
+            {loading ? "处理中..." : isLogin ? "登录" : "注册"}{" "}
+            {!loading && <ArrowRight size={18} />}
           </button>
         </form>
 
