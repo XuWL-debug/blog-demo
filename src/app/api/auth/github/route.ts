@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { GITHUB_CLIENT_ID, GITHUB_REDIRECT_URI } from "@/lib/github-oauth";
+import {
+  GITHUB_CLIENT_ID,
+  GITHUB_REDIRECT_URI,
+} from "@/lib/github-oauth";
 
 export async function GET() {
   const params = new URLSearchParams({
