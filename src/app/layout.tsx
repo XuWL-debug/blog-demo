@@ -9,22 +9,19 @@ import { AuthProvider } from "@/components/AuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "我的博客 | 技术分享与生活记录",
+  title: "XWL Blog | 技术分享与生活记录",
   description: "一个高性能、高颜值的个人博客，分享技术与生活",
-  keywords: ["博客", "技术", "前端", "Next.js", "React"],
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-            <div className="min-h-screen flex flex-col">
+            <div className="relative z-10 min-h-screen flex flex-col">
               <Header />
               <main className="flex-1 container mx-auto px-4 py-8">
                 {children}
